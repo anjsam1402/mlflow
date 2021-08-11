@@ -10,9 +10,12 @@ Keras (native) format
 import importlib
 import os
 import re
+import time
+
 import yaml
 import tempfile
 import shutil
+import logging
 
 import pandas as pd
 
@@ -49,6 +52,9 @@ from mlflow.utils.autologging_utils import (
 )
 from mlflow.tracking._model_registry import DEFAULT_AWAIT_MAX_SLEEP_SECONDS
 
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
 
 FLAVOR_NAME = "keras"
 # File name to which custom objects cloudpickle is saved - used during save and load
@@ -581,7 +587,11 @@ def load_model(model_uri, **kwargs):
         keras_model = mlflow.keras.load_model("runs:/96771d893a5e46159d9f3b49bf9013e2" + "/models")
         predictions = keras_model.predict(x_test)
     """
+    startda = time.time()
+    _logger.info("========>  Started loading model : ===========> ")
     local_model_path = _download_artifact_from_uri(artifact_uri=model_uri)
+    _logger.info("Total time to download artifacts to temp dir : " + str(time.time() - startda))
+
     flavor_conf = _get_flavor_configuration(model_path=local_model_path, flavor_name=FLAVOR_NAME)
     keras_module = importlib.import_module(flavor_conf.get("keras_module", "keras"))
     keras_model_artifacts_path = os.path.join(
