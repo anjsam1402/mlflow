@@ -64,24 +64,24 @@ def _download_artifact_from_uri(artifact_uri, output_path=None):
                         a local output path will be created.
     """
 
-    _logger.info(
+    logging.info(
         "========>  Started downloading artifact from uri : ========> ")
     if artifact_uri is not None:
-        _logger.info(" artifact_uri: " + artifact_uri)
+        logging.info(" artifact_uri: " + artifact_uri)
     else:
-        _logger.info(" artifact_uri is None !!!!! ")
+        logging.info(" artifact_uri is None !!!!! ")
 
     if output_path is not None:
-        _logger.info(" output_path: " + output_path)
+        logging.info(" output_path: " + output_path)
     else:
-        _logger.info(" output_path is None !!!!! ")
+        logging.info(" output_path is None !!!!! ")
 
     parsed_uri = urllib.parse.urlparse(str(artifact_uri))
     # print(type(parsed_uri), parsed_uri)
     if parsed_uri is not None:
-        _logger.info(" parsed_uri: " + parsed_uri.scheme)
+        logging.info(" parsed_uri: " + parsed_uri.scheme)
     else:
-        _logger.info(" parsed_uri is None !!!!! ")
+        logging.info(" parsed_uri is None !!!!! ")
 
     prefix = ""
     if parsed_uri.scheme and not parsed_uri.path.startswith("/"):
@@ -89,14 +89,14 @@ def _download_artifact_from_uri(artifact_uri, output_path=None):
         prefix = parsed_uri.scheme + ":"
         parsed_uri = parsed_uri._replace(scheme="")
         if prefix is not None:
-            _logger.info(" prefix: " + prefix)
+            logging.info(" prefix: " + prefix)
         else:
-            _logger.info(" prefix is None !!!!! ")
+            logging.info(" prefix is None !!!!! ")
 
         if parsed_uri is not None:
-            _logger.info(" parsed_uri: " + parsed_uri)
+            logging.info(" parsed_uri: " + parsed_uri)
         else:
-            _logger.info(" parsed_uri is None !!!!! ")
+            logging.info(" parsed_uri is None !!!!! ")
 
     # For models:/ URIs, it doesn't make sense to initialize a ModelsArtifactRepository with only
     # the model name portion of the URI, then call download_artifacts with the version info.
@@ -104,9 +104,9 @@ def _download_artifact_from_uri(artifact_uri, output_path=None):
         root_uri = artifact_uri
         artifact_path = ""
         if root_uri is not None:
-            _logger.info(" root_uri: " + root_uri)
+            logging.info(" root_uri: " + root_uri)
         else:
-            _logger.info(" root_uri is None !!!!! ")
+            logging.info(" root_uri is None !!!!! ")
     else:
         artifact_path = posixpath.basename(parsed_uri.path)
         parsed_uri = parsed_uri._replace(path=posixpath.dirname(parsed_uri.path))
