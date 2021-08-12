@@ -592,13 +592,25 @@ def load_model(model_uri, **kwargs):
     local_model_path = _download_artifact_from_uri(artifact_uri=model_uri)
     _logger.info("Total time to download artifacts to temp dir : " + str(time.time() - startda))
 
+    startda = time.time()
     flavor_conf = _get_flavor_configuration(model_path=local_model_path, flavor_name=FLAVOR_NAME)
+    _logger.info("Total time to get flavour configuration : " + str(time.time() - startda))
+
+    startda = time.time()
     keras_module = importlib.import_module(flavor_conf.get("keras_module", "keras"))
+    _logger.info("Total time to import keras module : " + str(time.time() - startda))
+
+    startda = time.time()
     keras_model_artifacts_path = os.path.join(
         local_model_path, flavor_conf.get("data", _MODEL_SAVE_PATH)
     )
+    _logger.info("Total time to get keras_model_artifacts_path : " + str(time.time() - startda))
+
     # For backwards compatibility, we assume h5 when the save_format is absent
+    startda = time.time()
     save_format = flavor_conf.get("save_format", "h5")
+    _logger.info("Total time to get the save_format : " + str(time.time() - startda))
+
     return _load_model(
         model_path=keras_model_artifacts_path,
         keras_module=keras_module,
