@@ -609,7 +609,7 @@ def load_model(model_uri, **kwargs):
     # For backwards compatibility, we assume h5 when the save_format is absent
     startda = time.time()
     save_format = flavor_conf.get("save_format", "h5")
-    _logger.info("Total time to get the save_format : " + str(time.time() - startda))
+    _logger.info("Total time to get the save_format: " + str(time.time() - startda))
 
     return _load_model(
         model_path=keras_model_artifacts_path,
