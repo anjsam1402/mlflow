@@ -588,9 +588,9 @@ def load_model(model_uri, **kwargs):
         predictions = keras_model.predict(x_test)
     """
     startda = time.time()
-    logging.info("========>  Started loading model : ===========> ")
+    _logger.info("========>  Started loading model : ===========> ")
     local_model_path = _download_artifact_from_uri(artifact_uri=model_uri)
-    logging.info("Total time to download artifacts to temp dir : " + str(time.time() - startda))
+    _logger.info("Total time to download artifacts to temp dir : " + str(time.time() - startda))
 
     flavor_conf = _get_flavor_configuration(model_path=local_model_path, flavor_name=FLAVOR_NAME)
     keras_module = importlib.import_module(flavor_conf.get("keras_module", "keras"))
