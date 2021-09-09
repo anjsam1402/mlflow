@@ -8,6 +8,7 @@ import catboost as cb
 import numpy as np
 import pandas as pd
 import sklearn.datasets as datasets
+from sklearn.pipeline import Pipeline
 
 import mlflow.catboost
 from mlflow import pyfunc
@@ -131,6 +132,7 @@ save_formats = SUPPORTS_DESERIALIZATION + ["python", "cpp", "pmml"]
 
 
 @pytest.mark.large
+@pytest.mark.allow_infer_pip_requirements_fallback
 @pytest.mark.parametrize("save_format", save_formats)
 def test_log_model_logs_save_format(reg_model, save_format):
     with mlflow.start_run():
@@ -301,14 +303,16 @@ def test_log_model_with_pip_requirements(reg_model, tmpdir):
     req_file.write("a")
     with mlflow.start_run():
         mlflow.catboost.log_model(reg_model.model, "model", pip_requirements=req_file.strpath)
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"])
+        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"], strict=True)
 
     # List of requirements
     with mlflow.start_run():
         mlflow.catboost.log_model(
             reg_model.model, "model", pip_requirements=[f"-r {req_file.strpath}", "b"]
         )
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"])
+        _assert_pip_requirements(
+            mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"], strict=True
+        )
 
     # Constraints file
     with mlflow.start_run():
@@ -316,7 +320,10 @@ def test_log_model_with_pip_requirements(reg_model, tmpdir):
             reg_model.model, "model", pip_requirements=[f"-c {req_file.strpath}", "b"]
         )
         _assert_pip_requirements(
-            mlflow.get_artifact_uri("model"), ["mlflow", "b", "-c constraints.txt"], ["a"]
+            mlflow.get_artifact_uri("model"),
+            ["mlflow", "b", "-c constraints.txt"],
+            ["a"],
+            strict=True,
         )
 
 
@@ -357,9 +364,7 @@ def test_model_save_without_specified_conda_env_uses_default_env_with_expected_d
     reg_model, model_path
 ):
     mlflow.catboost.save_model(reg_model.model, model_path)
-    pyfunc_conf = _get_flavor_configuration(model_path=model_path, flavor_name=pyfunc.FLAVOR_NAME)
-    conda_env_path = os.path.join(model_path, pyfunc_conf[pyfunc.ENV])
-    assert read_yaml(conda_env_path) == mlflow.catboost.get_default_conda_env()
+    _assert_pip_requirements(model_path, mlflow.catboost.get_default_pip_requirements())
 
 
 @pytest.mark.large
@@ -371,10 +376,7 @@ def test_model_log_without_specified_conda_env_uses_default_env_with_expected_de
         mlflow.catboost.log_model(reg_model.model, artifact_path)
         model_uri = mlflow.get_artifact_uri(artifact_path)
 
-    local_path = _download_artifact_from_uri(artifact_uri=model_uri)
-    pyfunc_conf = _get_flavor_configuration(model_path=local_path, flavor_name=pyfunc.FLAVOR_NAME)
-    conda_env_path = os.path.join(local_path, pyfunc_conf[pyfunc.ENV])
-    assert read_yaml(conda_env_path) == mlflow.catboost.get_default_conda_env()
+    _assert_pip_requirements(model_uri, mlflow.catboost.get_default_pip_requirements())
 
 
 @pytest.mark.large
@@ -392,3 +394,21 @@ def test_pyfunc_serve_and_score(reg_model):
     )
     scores = pd.read_json(resp.content, orient="records").values.squeeze()
     np.testing.assert_array_almost_equal(scores, model.predict(inference_dataframe))
+
+
+@pytest.mark.large
+def test_pyfunc_serve_and_score_sklearn(reg_model):
+    model, inference_dataframe = reg_model
+    model = Pipeline([("model", reg_model.model)])
+
+    with mlflow.start_run():
+        mlflow.sklearn.log_model(model, artifact_path="model")
+        model_uri = mlflow.get_artifact_uri("model")
+
+    resp = pyfunc_serve_and_score_model(
+        model_uri,
+        inference_dataframe.head(3),
+        pyfunc_scoring_server.CONTENT_TYPE_JSON_SPLIT_ORIENTED,
+    )
+    scores = pd.read_json(resp.content, orient="records").values.squeeze()
+    np.testing.assert_array_almost_equal(scores, model.predict(inference_dataframe.head(3)))

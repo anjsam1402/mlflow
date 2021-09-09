@@ -1,6 +1,7 @@
 """
 Utilities for dealing with artifacts in the context of a Run.
 """
+import os
 import pathlib
 import posixpath
 import shutil
@@ -15,6 +16,7 @@ from mlflow.store.artifact.dbfs_artifact_repo import DbfsRestArtifactRepository
 from mlflow.store.artifact.models_artifact_repo import ModelsArtifactRepository
 from mlflow.tracking._tracking_service.utils import _get_store
 from mlflow.utils.uri import add_databricks_profile_info_to_artifact_uri, append_to_uri_path
+from mlflow.utils.file_utils import path_to_local_file_uri
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -76,6 +78,8 @@ def _download_artifact_from_uri(artifact_uri, output_path=None):
     else:
         _logger.info(" output_path is None !!!!! ")
 
+    if os.path.exists(artifact_uri):
+        artifact_uri = path_to_local_file_uri(artifact_uri)
     parsed_uri = urllib.parse.urlparse(str(artifact_uri))
     # print(type(parsed_uri), parsed_uri)
     if parsed_uri is not None:
@@ -118,7 +122,7 @@ def _download_artifact_from_uri(artifact_uri, output_path=None):
 
 
 def _upload_artifacts_to_databricks(
-        source, run_id, source_host_uri=None, target_databricks_profile_uri=None
+    source, run_id, source_host_uri=None, target_databricks_profile_uri=None
 ):
     """
     Copy the artifacts from ``source`` to the destination Databricks workspace (DBFS) given by
