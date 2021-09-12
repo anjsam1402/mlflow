@@ -66,8 +66,7 @@ def _download_artifact_from_uri(artifact_uri, output_path=None):
                         a local output path will be created.
     """
 
-    _logger.info(
-        "========>  Started downloading artifact from uri : ========> ")
+    _logger.info("========>  Started downloading artifact from uri : ========> ")
     if artifact_uri is not None:
         _logger.info(" artifact_uri: " + artifact_uri)
     else:
@@ -79,11 +78,13 @@ def _download_artifact_from_uri(artifact_uri, output_path=None):
         _logger.info(" output_path is None !!!!! ")
 
     if os.path.exists(artifact_uri):
+        _logger.info(" artifact_uri !!!!! ")
         artifact_uri = path_to_local_file_uri(artifact_uri)
     parsed_uri = urllib.parse.urlparse(str(artifact_uri))
     # print(type(parsed_uri), parsed_uri)
     if parsed_uri is not None:
-        _logger.info(" parsed_uri: " + parsed_uri.scheme)
+        _logger.info(" parsed_uri_path: " + parsed_uri.path)
+        _logger.info(" parsed_uri_scheme: " + parsed_uri.scheme)
     else:
         _logger.info(" parsed_uri is None !!!!! ")
 

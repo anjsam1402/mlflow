@@ -559,12 +559,13 @@ def _load_pyfunc(path):
         raise MlflowException("Unsupported backend '%s'" % K._BACKEND)
 
 
-def load_model(model_uri, **kwargs):
+def load_model(model_uri, local_destination_path=None, **kwargs):
     """
     Load a Keras model from a local file or a run.
 
     Extra arguments are passed through to keras.load_model.
 
+    :param local_destination_path: The local path for downloading the model artifacts from the artifact store.
     :param model_uri: The location, in URI format, of the MLflow model. For example:
 
                       - ``/Users/me/path/to/local/model``
@@ -590,7 +591,7 @@ def load_model(model_uri, **kwargs):
     _raise_deprecation_warning()
     startda = time.time()
     _logger.info("========>  Started loading model : ===========> ")
-    local_model_path = _download_artifact_from_uri(artifact_uri=model_uri)
+    local_model_path = _download_artifact_from_uri(artifact_uri=model_uri, output_path=local_destination_path)
     _logger.info("Total time to download artifacts to temp dir : " + str(time.time() - startda))
 
     startda = time.time()
