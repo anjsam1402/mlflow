@@ -7,6 +7,7 @@ import posixpath
 import shutil
 import tempfile
 import urllib.parse
+import logging
 
 from mlflow.exceptions import MlflowException
 from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
@@ -16,6 +17,9 @@ from mlflow.store.artifact.models_artifact_repo import ModelsArtifactRepository
 from mlflow.tracking._tracking_service.utils import _get_store
 from mlflow.utils.uri import add_databricks_profile_info_to_artifact_uri, append_to_uri_path
 from mlflow.utils.file_utils import path_to_local_file_uri
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
 
 
 def get_artifact_uri(run_id, artifact_path=None, tracking_uri=None):
@@ -61,20 +65,53 @@ def _download_artifact_from_uri(artifact_uri, output_path=None):
     :param output_path: The local filesystem path to which to download the artifact. If unspecified,
                         a local output path will be created.
     """
+
+    _logger.info("========>  Started downloading artifact from uri : ========> ")
+    if artifact_uri is not None:
+        _logger.info(" artifact_uri: " + artifact_uri)
+    else:
+        _logger.info(" artifact_uri is None !!!!! ")
+
+    if output_path is not None:
+        _logger.info(" output_path: " + output_path)
+    else:
+        _logger.info(" output_path is None !!!!! ")
+
     if os.path.exists(artifact_uri):
+        _logger.info(" artifact_uri !!!!! ")
         artifact_uri = path_to_local_file_uri(artifact_uri)
     parsed_uri = urllib.parse.urlparse(str(artifact_uri))
+    # print(type(parsed_uri), parsed_uri)
+    if parsed_uri is not None:
+        _logger.info(" parsed_uri_path: " + parsed_uri.path)
+        _logger.info(" parsed_uri_scheme: " + parsed_uri.scheme)
+    else:
+        _logger.info(" parsed_uri is None !!!!! ")
+
     prefix = ""
     if parsed_uri.scheme and not parsed_uri.path.startswith("/"):
         # relative path is a special case, urllib does not reconstruct it properly
         prefix = parsed_uri.scheme + ":"
         parsed_uri = parsed_uri._replace(scheme="")
+        if prefix is not None:
+            _logger.info(" prefix: " + prefix)
+        else:
+            _logger.info(" prefix is None !!!!! ")
+
+        if parsed_uri is not None:
+            _logger.info(" parsed_uri: " + parsed_uri)
+        else:
+            _logger.info(" parsed_uri is None !!!!! ")
 
     # For models:/ URIs, it doesn't make sense to initialize a ModelsArtifactRepository with only
     # the model name portion of the URI, then call download_artifacts with the version info.
     if ModelsArtifactRepository.is_models_uri(artifact_uri):
         root_uri = artifact_uri
         artifact_path = ""
+        if root_uri is not None:
+            _logger.info(" root_uri: " + root_uri)
+        else:
+            _logger.info(" root_uri is None !!!!! ")
     else:
         artifact_path = posixpath.basename(parsed_uri.path)
         parsed_uri = parsed_uri._replace(path=posixpath.dirname(parsed_uri.path))

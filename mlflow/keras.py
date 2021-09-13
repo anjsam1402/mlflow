@@ -10,9 +10,12 @@ Keras (native) format
 import importlib
 import os
 import re
+import time
+
 import yaml
 import tempfile
 import shutil
+import logging
 import warnings
 
 import pandas as pd
@@ -50,6 +53,9 @@ from mlflow.utils.autologging_utils import (
 )
 from mlflow.tracking._model_registry import DEFAULT_AWAIT_MAX_SLEEP_SECONDS
 
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
 
 FLAVOR_NAME = "keras"
 # File name to which custom objects cloudpickle is saved - used during save and load
@@ -553,12 +559,13 @@ def _load_pyfunc(path):
         raise MlflowException("Unsupported backend '%s'" % K._BACKEND)
 
 
-def load_model(model_uri, **kwargs):
+def load_model(model_uri, local_destination_path=None, **kwargs):
     """
     Load a Keras model from a local file or a run.
 
     Extra arguments are passed through to keras.load_model.
 
+    :param local_destination_path: The local path for downloading the model artifacts from the artifact store.
     :param model_uri: The location, in URI format, of the MLflow model. For example:
 
                       - ``/Users/me/path/to/local/model``
@@ -582,14 +589,30 @@ def load_model(model_uri, **kwargs):
         predictions = keras_model.predict(x_test)
     """
     _raise_deprecation_warning()
-    local_model_path = _download_artifact_from_uri(artifact_uri=model_uri)
+    startda = time.time()
+    _logger.info("========>  Started loading model : ===========> ")
+    local_model_path = _download_artifact_from_uri(artifact_uri=model_uri, output_path=local_destination_path)
+    _logger.info("Total time to download artifacts to temp dir : " + str(time.time() - startda))
+
+    startda = time.time()
     flavor_conf = _get_flavor_configuration(model_path=local_model_path, flavor_name=FLAVOR_NAME)
+    _logger.info("Total time to get flavour configuration : " + str(time.time() - startda))
+
+    startda = time.time()
     keras_module = importlib.import_module(flavor_conf.get("keras_module", "keras"))
+    _logger.info("Total time to import keras module : " + str(time.time() - startda))
+
+    startda = time.time()
     keras_model_artifacts_path = os.path.join(
         local_model_path, flavor_conf.get("data", _MODEL_SAVE_PATH)
     )
+    _logger.info("Total time to get keras_model_artifacts_path : " + str(time.time() - startda))
+
     # For backwards compatibility, we assume h5 when the save_format is absent
+    startda = time.time()
     save_format = flavor_conf.get("save_format", "h5")
+    _logger.info("Total time to get the save_format: " + str(time.time() - startda))
+
     return _load_model(
         model_path=keras_model_artifacts_path,
         keras_module=keras_module,
