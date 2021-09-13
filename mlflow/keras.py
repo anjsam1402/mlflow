@@ -559,7 +559,7 @@ def load_model(model_uri, local_destination_path=None, **kwargs):
 
     Extra arguments are passed through to keras.load_model.
 
-    :param local_destination_path: The local path for downloading the model artifacts from the artifact store.
+    :param local_destination_path: The local path for downloading the model artifacts.
     :param model_uri: The location, in URI format, of the MLflow model. For example:
 
                       - ``/Users/me/path/to/local/model``
@@ -583,7 +583,9 @@ def load_model(model_uri, local_destination_path=None, **kwargs):
         predictions = keras_model.predict(x_test)
     """
     _raise_deprecation_warning()
-    local_model_path = _download_artifact_from_uri(artifact_uri=model_uri, output_path=local_destination_path)
+    local_model_path = _download_artifact_from_uri(
+        artifact_uri=model_uri, output_path=local_destination_path
+    )
     flavor_conf = _get_flavor_configuration(model_path=local_model_path, flavor_name=FLAVOR_NAME)
     keras_module = importlib.import_module(flavor_conf.get("keras_module", "keras"))
     keras_model_artifacts_path = os.path.join(
